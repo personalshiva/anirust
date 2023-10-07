@@ -1,0 +1,22 @@
+[package]
+name = "anirust"
+description = "CLI tool to watch and download anime"
+license-file = "LICENSE"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-recursion = "1.0.5"
+clap = { version = "4.4.6", features = ["derive"] }
+dirs = "5.0.1"
+hex = "0.4.3"
+indexmap = "2.0.2"
+reqwest = { version = "0.11.20", features = ["json"] }
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.107"
+skim = "0.10.4"
+strum = { version = "0.25.0", features = ["derive"] }
+tokio = { version = "1.32.0", features = ["full"] }
+toml = "0.8.1"
