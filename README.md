@@ -4,7 +4,7 @@
     alt="anirust">
 </p>
 
-Anirust is a CLI tool to watch and download anime.
+Anirust is a CLI tool to watch anime.
 
 Inspired by (☞ﾟヮﾟ)☞ <a href="https://github.com/pystardust/ani-cli">ani-cli</a>
 
