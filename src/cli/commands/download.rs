@@ -93,13 +93,17 @@ pub fn download(app: &App) -> Result<(), DownloadError> {
             return Ok(());
         } else {
             return Err(DownloadError::RequiredToolMissing(
-                "yt-dlp or ffmpeg".to_string(),
+                "yt-dlp or ffmpeg".to_owned(),
             ));
         }
     }
-    // default
-    aria2c_download(filename, url, &download_dir);
-    Ok(())
+    // Default
+    if is_command_available("aria2c") {
+        aria2c_download(filename, url, &download_dir);
+        Ok(())
+    } else {
+        Err(DownloadError::RequiredToolMissing("aria2c".to_owned()))
+    }
 }
 
 fn aria2c_download(filename: String, url: &str, download_dir: &std::path::Path) {

@@ -32,7 +32,6 @@ jobs:
 
     - name: Lint with Clippy
       run: cargo clippy -- -D clippy::unwrap_used
-      # the '-D clippy::unwrap_used' part makes the lint into a denied lint, so it will error out if an unwrap/expect is found.
 
     - name: Check
       run: cargo check --verbose

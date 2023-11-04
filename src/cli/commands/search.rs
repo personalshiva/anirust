@@ -102,13 +102,8 @@ pub async fn fetch_episode(
         None => select_episode(show.available_episodes()),
     };
 
-    let sources = fetch_sources(
-        client,
-        show.id().clone().to_owned(),
-        state.audio_mode(),
-        ep_number,
-    )
-    .await?;
+    let sources =
+        fetch_sources(client, show.id().to_owned(), state.audio_mode(), ep_number).await?;
     let source = select_source(state.known_providers(), &sources)?;
     let url = fetch_url(client, state.quality(), source).await?;
 
@@ -224,7 +219,7 @@ pub fn select_episode(available_episodes: &[u32]) -> u32 {
     let display_episodes: Vec<&str> = display_episodes.iter().map(|x| x.as_str()).collect();
     skim_menu(&display_episodes, Some("Select episode: "))
         .parse()
-        .unwrap()
+        .expect("Selecting from from previously parsed integers")
 }
 
 async fn fetch_sources(
