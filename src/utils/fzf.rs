@@ -18,7 +18,7 @@ pub fn skim_menu(options: &[&str], prompt: Option<&str>) -> String {
 
         let selected_items = Skim::run_with(&options, Some(items.clone()))
             .map(|out| out.selected_items)
-            .unwrap_or_else(Vec::new);
+            .unwrap_or_default();
 
         if let Some(selected_item) = selected_items.first() {
             return selected_item.output().to_string();
