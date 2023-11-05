@@ -12,63 +12,59 @@ use super::{
     player_menu, quality_menu, settings_menu,
 };
 
+#[async_recursion::async_recursion]
 pub async fn handle_main_option(app: &mut App, option: MainOption) {
     match option {
-        MainOption::Search => search_show_handler(app).await,
-        MainOption::Settings => settings_handler(app).await,
-        MainOption::Quit => quit_handler(),
+        MainOption::Search => {
+            app.mut_state().set_show_query(None, None);
+            search_then_menu(app).await;
+        }
+        MainOption::Settings => settings_menu(app).await,
+        MainOption::Quit => std::process::exit(0),
     }
-}
-
-async fn search_show_handler(app: &mut App) {
-    app.mut_state().set_show_query(None, None);
-    search_then_menu(app).await;
-}
-
-async fn settings_handler(app: &mut App) {
-    settings_menu(app).await;
-}
-
-fn quit_handler() {
-    std::process::exit(0);
 }
 
 #[async_recursion::async_recursion]
 pub async fn handle_player_option(app: &mut App, option: PlayerOption) {
     match option {
-        PlayerOption::Play => play_handler(app).await,
-        PlayerOption::Next => match next_handler(app).await {
-            Ok(_) => (),
-            Err(e) => error_menu(app, e).await,
-        },
-        PlayerOption::Previous => match previous_handler(app).await {
-            Ok(_) => (),
-            Err(e) => error_menu(app, e).await,
-        },
-        PlayerOption::Download => download_handler(app).await,
-        PlayerOption::Select => match select_handler(app).await {
-            Ok(_) => (),
-            Err(e) => error_menu(app, e).await,
-        },
-        PlayerOption::Menu => {
-            main_menu(app).await;
+        PlayerOption::Play => play_or_menu(app).await,
+        PlayerOption::Next | PlayerOption::Previous => {
+            let result = next_previous_handler(app, option).await;
+            if let Err(e) = result {
+                error_menu(app, e).await;
+            }
         }
-        PlayerOption::Quit => quit_handler(),
+        PlayerOption::Download => download_handler(app).await,
+        PlayerOption::Select => {
+            let result = select_handler(app).await;
+            if let Err(e) = result {
+                error_menu(app, e).await;
+            }
+        }
+        PlayerOption::Menu => main_menu(app).await,
+        PlayerOption::Quit => std::process::exit(0),
     }
 }
 
-#[async_recursion::async_recursion]
-async fn play_handler(app: &mut App) {
+async fn play_or_menu(app: &mut App) {
     if let Err(e) = app.player().is_available().await {
-        error_menu(app, e).await
+        error_menu(app, e).await;
     }
     app.player().play(app.state());
     player_menu(app).await;
 }
 
 #[async_recursion::async_recursion]
-async fn next_handler(app: &mut App) -> Result<(), ApiError> {
-    let next = app.state().next_episode();
+async fn next_previous_handler(app: &mut App, option: PlayerOption) -> Result<(), ApiError> {
+    let next = match option {
+        PlayerOption::Next => app.state().next_episode(),
+        PlayerOption::Previous => app.state().previous_episode(),
+        _ => {
+            return Err(ApiError::ClientError(
+                "Invalid PlayerOption: Expected Next or Previous".to_owned(),
+            ))
+        }
+    };
     let current_episode = match app.state().current_show() {
         Some(current_show) => {
             fetch_episode(app.state(), app.client(), current_show, Some(next)).await?
@@ -84,30 +80,11 @@ async fn next_handler(app: &mut App) -> Result<(), ApiError> {
     Ok(())
 }
 
-#[async_recursion::async_recursion]
-async fn previous_handler(app: &mut App) -> Result<(), ApiError> {
-    let prev = app.state().previous_episode();
-    let current_episode = match app.state().current_show() {
-        Some(current_show) => {
-            fetch_episode(app.state(), app.client(), current_show, Some(prev)).await?
-        }
-        None => {
-            return Err(ApiError::ClientError(
-                "No current show is selected".to_owned(),
-            ))
-        }
-    };
-    app.mut_state().set_episode(current_episode);
-    player_menu(app).await;
-    Ok(())
-}
-
 async fn download_handler(app: &mut App) {
-    match download(app) {
-        Ok(_) => player_menu(app).await,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-        }
+    if let Err(e) = download(app) {
+        eprintln!("Error: {}", e);
+    } else {
+        player_menu(app).await;
     }
 }
 
@@ -131,32 +108,15 @@ async fn select_handler(app: &mut App) -> Result<(), ApiError> {
 
 pub async fn handle_setting_option(app: &mut App, option: SettingOption) {
     match option {
-        SettingOption::Audio => audio_handler(app).await,
-        SettingOption::Quality => quality_handler(app).await,
-        SettingOption::Player => player_handler(app).await,
+        SettingOption::Audio => audio_menu(app).await,
+        SettingOption::Quality => quality_menu(app).await,
+        SettingOption::Player => media_player_menu(app).await,
     }
-}
-
-#[async_recursion::async_recursion]
-pub async fn quality_handler(app: &mut App) {
-    quality_menu(app).await;
-}
-
-#[async_recursion::async_recursion]
-pub async fn audio_handler(app: &mut App) {
-    audio_menu(app).await;
-}
-
-#[async_recursion::async_recursion]
-pub async fn player_handler(app: &mut App) {
-    media_player_menu(app).await;
 }
 
 pub async fn handle_error_option(app: &mut App, option: ErrorOption) {
     match option {
-        ErrorOption::Menu => {
-            main_menu(app).await;
-        }
-        ErrorOption::Quit => quit_handler(),
+        ErrorOption::Menu => main_menu(app).await,
+        ErrorOption::Quit => std::process::exit(0),
     }
 }
