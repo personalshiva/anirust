@@ -4,7 +4,7 @@ use crate::{
     app::App,
     app_state::AppState,
     config::{AudioMode, MediaPlayer, Quality},
-    utils::fzf::skim_menu,
+    utils::skim_menu::skim_menu,
 };
 
 use self::{

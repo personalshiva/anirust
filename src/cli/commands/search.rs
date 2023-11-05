@@ -13,7 +13,7 @@ use crate::{
     cli::args::SearchCommand,
     config::{AudioMode, Quality},
     menu::{error_menu, player_menu},
-    utils::fzf::{prompt_user, skim_menu},
+    utils::skim_menu::{prompt_user, skim_menu},
 };
 
 #[derive(Debug)]
@@ -272,21 +272,27 @@ async fn fetch_url(
     quality: &Quality,
     stream: SourceUrl,
 ) -> Result<String, ApiError> {
+    // Decrypt the source URL
     let decrypted_url =
         decrypt_url(stream.source_url).map_err(|e| ApiError::BadUrl(e.to_owned()))?;
 
+    // Request links using the decrypted URL
     let response = client
         .request_links(&decrypted_url)
         .await
         .map_err(|_| ApiError::ClientError("Failed to request links".to_owned()))?;
 
-    let selected_url = find_first_quality(client.client(), quality, &response.links)
+    // Find the first URL matching the specified quality or return a BadUrl error
+    find_first_quality(client.client(), quality, &response.links)
         .await
-        .ok_or(ApiError::BadUrl(
-            "Failed to produce URL for selected quality".to_owned(),
-        ))?;
-
-    Ok(selected_url)
+        .map_or_else(
+            || {
+                Err(ApiError::BadUrl(
+                    "Failed to produce URL for selected quality".to_owned(),
+                ))
+            },
+            Ok,
+        )
 }
 
 async fn find_first_quality(

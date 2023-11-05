@@ -1,4 +1,4 @@
-pub mod fzf;
+pub mod skim_menu;
 
 use std::process::{Command, Stdio};
 
