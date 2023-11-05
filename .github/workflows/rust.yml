@@ -38,3 +38,10 @@ jobs:
       
     - name: Test
       run: cargo test --verbose
+
+    - name: Check if Cargo.toml version is bumped
+      run: |
+        if git diff --exit-code origin/main -- Cargo.toml; then
+          echo "Cargo.toml version is not bumped."
+          exit 1
+        fi
