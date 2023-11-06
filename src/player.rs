@@ -99,7 +99,7 @@ impl AppPlayer {
             MediaPlayer::MPV => {
                 vec![
                     format!(
-                        r#"--mpv-force-media-title="{} Episode {}""#,
+                        r#"--force-media-title="{} Episode {}""#,
                         state
                             .current_show()
                             .expect("Show selected")
